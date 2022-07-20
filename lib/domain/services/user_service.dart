@@ -1,11 +1,7 @@
-import 'dart:developer';
 import 'dart:io';
 
-import 'package:chat_example/domain/entity/message_entity.dart';
-import 'package:chat_example/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-
 import '../entity/user_entity.dart';
 
 class UserService {
@@ -66,53 +62,21 @@ class UserService {
     }
   }
 
-  sendMessage({
-    required UserEntity userEntity,
-    required String? message,
-    required String roomId,
-  }) async {
+  Future<List<UserEntity>> getUsers() async {
     try {
-      if (message!.isNotEmpty) {
-        MessageEntity newMessage = MessageEntity(
-          sender: userEntity.uid,
-          messageId: uuid.v1(),
-          message: message,
-          createdDate: DateTime.now(),
-          seen: false,
-        );
+      List<UserEntity> data = [];
 
-        await fireStore
-            .collection('chatrooms')
-            .doc(roomId)
-            .collection('messages')
-            .doc(newMessage.messageId)
-            .set(newMessage.toMap());
-      }
+      final result = await fireStore.collection(collection).get();
 
-      return true;
-    } catch (error) {
-      log('error $error');
-      return false;
-    }
-  }
-
-  Future<List<MessageEntity>> getMessages({required String roomId}) async {
-    try {
-      List<MessageEntity> data = [];
-
-      final result = await fireStore
-          .collection('chatrooms')
-          .doc(roomId)
-          .collection('messages')
-          .get();
+      print(result);
 
       result.docs.forEach((element) {
-        data.add(MessageEntity.fromJson(element.data()));
+        data.add(UserEntity.fromJson(element.data()));
       });
 
       return data;
     } catch (error) {
-      log('error $error');
+      print('error $error');
 
       throw Exception(error.toString());
     }

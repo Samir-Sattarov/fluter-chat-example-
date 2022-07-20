@@ -5,7 +5,6 @@ class MessageWidget extends StatelessWidget {
   final String? sender;
   final String? message;
   final DateTime? createdDate;
-  final bool? seen;
   final bool isMe;
   const MessageWidget({
     Key? key,
@@ -13,7 +12,6 @@ class MessageWidget extends StatelessWidget {
     required this.sender,
     required this.message,
     required this.createdDate,
-    required this.seen,
     required this.isMe,
   }) : super(key: key);
 

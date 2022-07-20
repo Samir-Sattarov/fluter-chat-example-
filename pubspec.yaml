@@ -42,6 +42,7 @@ dependencies:
   flutter_bloc: ^8.0.1
   image_picker: ^0.8.5+3
   uuid: ^3.0.6
+  flutter_secure_storage: ^5.0.2
 
 dev_dependencies:
   flutter_test:

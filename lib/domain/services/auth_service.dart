@@ -4,13 +4,18 @@ import 'package:chat_example/domain/entity/user_entity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../presentation/storage/secure_storage.dart';
+
 class AuthService {
   final firebaseAuth = FirebaseAuth.instance;
   final firebaseFireStore = FirebaseFirestore.instance;
   final collectionName = 'users';
 
+  final SecureStorage storage = SecureStorage();
   exit() async {
     await firebaseAuth.signOut();
+    const key = 'email';
+    storage.delete(key: key);
   }
 
   Future<UserEntity?>? signIn({
@@ -24,6 +29,7 @@ class AuthService {
         email: email,
         password: password,
       );
+      storage.set(email);
     } on FirebaseAuthException catch (error) {
       log(error.toString());
     }

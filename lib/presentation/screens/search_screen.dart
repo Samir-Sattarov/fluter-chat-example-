@@ -1,17 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:developer';
-
 import 'package:chat_example/domain/entity/chat_room_entity.dart';
-import 'package:chat_example/main.dart';
 import 'package:chat_example/presentation/cubit/user/user_cubit.dart';
 import 'package:chat_example/presentation/screens/chat_room_screen.dart';
 import 'package:chat_example/presentation/widget/text_field_widget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entity/user_entity.dart';
+import '../cubit/message/message_cubit.dart';
 import '../widget/user_widget.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -30,47 +27,6 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController controllerSearch = TextEditingController();
-
-  Future<ChatRoomEntity?> getChatRoomEntity(UserEntity targetUser) async {
-    ChatRoomEntity? chatRoomEntity;
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('chatrooms')
-        .where('participants.${widget.userEntity.uid}', isEqualTo: true)
-        .where('participants.${targetUser.uid}', isEqualTo: true)
-        .get();
-
-    if (snapshot.docs.isNotEmpty) {
-      final dataFromDoc = snapshot.docs.first.data();
-      log('all room already exist $dataFromDoc');
-
-      final ChatRoomEntity existChatroom =
-          ChatRoomEntity.fromJson(dataFromDoc as Map<String, dynamic>);
-
-      chatRoomEntity = existChatroom;
-      return chatRoomEntity;
-    } else {
-      log('null');
-
-      ChatRoomEntity newChatRoomEntity = ChatRoomEntity(
-        roomId: uuid.v1(),
-        participants: {
-          widget.userEntity.uid.toString(): true,
-          targetUser.uid.toString(): true,
-        },
-        lastMessage: "",
-      );
-
-      await FirebaseFirestore.instance
-          .collection('chatrooms')
-          .doc(newChatRoomEntity.roomId)
-          .set(newChatRoomEntity.toMap());
-
-      chatRoomEntity = newChatRoomEntity;
-
-      log('New chatroom crated');
-      return chatRoomEntity;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,35 +54,39 @@ class _SearchScreenState extends State<SearchScreen> {
             prefixIcon: Icons.search,
           ),
           BlocBuilder<UserCubit, UserState>(builder: (context, state) {
-            if (state is SuccessSearch) {
+            if (state is SuccessLoad) {
               return Column(
                 children: [
                   ...state.data.map(
-                    (data) => UserWidget(
-                      title: '${data.name} ${data.surname}',
-                      description: data.email!,
-                      imageUrl: data.image!,
-                      uid: data.uid!,
-                      onTap: () async {
-                        ChatRoomEntity? roomEntity =
-                            await getChatRoomEntity(data);
-
-                        log('navigator $roomEntity');
-                        if (roomEntity != null) {
-                          Navigator.push(
-                            context,
-                            ChatRoomScreen.route(
-                              targetUser: data,
-                              chatRoomEntity: roomEntity,
-                              userEntity: widget.userEntity,
-                            ),
-                          );
-                          await BlocProvider.of<UserCubit>(context).getMessages(
-                            roomId: roomEntity.roomId.toString(),
-                          );
-                        }
-                      },
-                    ),
+                    (data) => widget.userEntity.uid == data.uid
+                        ? const SizedBox()
+                        : UserWidget(
+                            title: '${data.name} ${data.surname}',
+                            description: data.email!,
+                            imageUrl: data.image!,
+                            uid: data.uid!,
+                            onTap: () async {
+                              ChatRoomEntity? roomEntity =
+                                  await BlocProvider.of<MessageCubit>(context)
+                                      .getChatRoomEntity(
+                                          targetUser: data,
+                                          entity: widget.userEntity);
+                              if (roomEntity != null) {
+                                Navigator.push(
+                                  context,
+                                  ChatRoomScreen.route(
+                                    targetUser: data,
+                                    chatRoomEntity: roomEntity,
+                                    userEntity: widget.userEntity,
+                                  ),
+                                );
+                                await BlocProvider.of<MessageCubit>(context)
+                                    .getMessages(
+                                  roomId: roomEntity.roomId.toString(),
+                                );
+                              }
+                            },
+                          ),
                   ),
                 ],
               );

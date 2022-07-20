@@ -1,4 +1,3 @@
-import 'package:chat_example/presentation/widget/button_widget.dart';
 import 'package:chat_example/presentation/widget/text_field_widget.dart';
 import 'package:flutter/material.dart';
 
@@ -18,24 +17,22 @@ class BottomMenuWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextFormFieldWidget(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Expanded(
+          child: TextFormFieldWidget(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             prefixIcon: icon,
             hint: hintText,
             controller: controller,
           ),
-          const SizedBox(height: 10),
-          ButtonWidget(
-            onPressed: () => onSend(),
-            text: 'Send',
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
+        ),
+        IconButton(
+          onPressed: () => onSend(),
+          icon: const Icon(Icons.send),
+        ),
+      ],
     );
   }
 }

@@ -28,7 +28,7 @@ class MessageService {
           userId: userEntity.uid,
         );
 
-        print('newMessage: $newMessage');
+        log('newMessage: $newMessage');
 
         await fireStore
             .collection('chatrooms')
@@ -37,7 +37,7 @@ class MessageService {
             .doc(newMessage.messageId)
             .set(newMessage.toMap());
 
-        print('sended');
+        log('sended');
       }
 
       return true;
@@ -91,26 +91,17 @@ class MessageService {
     }
   }
 
-  getMessages({required String roomId}) async {
+  Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(
+      {required String roomId}) {
     try {
-      List<MessageEntity> data = [];
-
       final result = fireStore
           .collection('chatrooms')
           .doc(roomId)
           .collection('messages')
+          .orderBy('createdAt', descending: true)
           .snapshots();
 
-      result.listen(
-        (snapshot) {
-          for (var doc in snapshot.docs) {
-            print('doc: ${doc.data()}');
-            data.add(MessageEntity.fromJson(doc.data()));
-          }
-        },
-      );
-
-      return [];
+      return result;
     } catch (error) {
       log('error $error');
 

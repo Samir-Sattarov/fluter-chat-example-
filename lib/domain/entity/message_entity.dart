@@ -1,35 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MessageEntity {
-  final String? messageId;
-  final String? sender;
   final String? message;
   final DateTime? createdDate;
-  final bool? seen;
+  final String? userId;
+  final String? imageUrl;
+  final String? messageId;
 
-  MessageEntity(
-      {required this.sender,
-      required this.messageId,
-      required this.message,
-      required this.createdDate,
-      required this.seen});
+  MessageEntity({
+    required this.message,
+    required this.createdDate,
+    required this.userId,
+    required this.messageId,
+    required this.imageUrl,
+  });
 
   factory MessageEntity.fromJson(Map<String, dynamic> json) {
     return MessageEntity(
-      sender: json['sender'],
       message: json['message'],
       createdDate: (json['createdDate'] as Timestamp).toDate(),
-      seen: json['seen'],
+      userId: json['userId'],
+      imageUrl: json['imageUrl'],
       messageId: json['messageId'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'sender': sender,
       'message': message,
       'createdDate': createdDate,
-      'seen': seen,
+      'userId': userId,
+      'imageUrl': imageUrl,
       'messageId': messageId,
     };
   }

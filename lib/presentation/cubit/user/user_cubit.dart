@@ -52,7 +52,7 @@ class UserCubit extends Cubit<UserState> {
 
       if (List.of(data).isNotEmpty) {
         log('success');
-        emit(SuccessSearch(data: data));
+        emit(SuccessLoad(data: data));
       } else {
         log('failed');
 
@@ -65,45 +65,23 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
-  sendMessage({
-    required UserEntity userEntity,
-    required String? message,
-    required String roomId,
-  }) async {
-    try {
-      final reuslt = await service.sendMessage(
-        userEntity: userEntity,
-        message: message,
-        roomId: roomId,
-      );
-
-      if (reuslt == true) {
-        log('message send');
-      } else {
-        log('message not send');
-      }
-    } catch (error) {
-      log('error $error');
-      emit(Error(error.toString()));
-    }
-  }
-
-  getMessages({required String roomId}) async {
+  getUsers() async {
     emit(Loading());
     try {
-      List<MessageEntity> data = [];
-      final result = await service.getMessages(roomId: roomId);
-      log(result.toString());
+      List<UserEntity> data = [];
+      final result = await service.getUsers();
 
       result.map((entity) => data.add(entity)).toList();
 
+      log(result.toString());
+
       if (List.of(data).isNotEmpty) {
         log('success');
-        emit(SuccessMessages(data));
+        emit(SuccessLoad(data: data));
       } else {
         log('failed');
 
-        emit(FailedMessages());
+        emit(FailedSearch());
       }
     } catch (error) {
       log('error $error');
@@ -111,4 +89,51 @@ class UserCubit extends Cubit<UserState> {
       emit(Error(error.toString()));
     }
   }
+
+  // sendMessage({
+  //   required UserEntity userEntity,
+  //   required String? message,
+  //   required String roomId,
+  // }) async {
+  //   try {
+  //     final reuslt = await service.sendMessage(
+  //       userEntity: userEntity,
+  //       message: message,
+  //       roomId: roomId,
+  //     );
+  //
+  //     if (reuslt == true) {
+  //       log('message send');
+  //     } else {
+  //       log('message not send');
+  //     }
+  //   } catch (error) {
+  //     log('error $error');
+  //     emit(Error(error.toString()));
+  //   }
+  // }
+  //
+  // getMessages({required String roomId}) async {
+  //   emit(Loading());
+  //   try {
+  //     List<MessageEntity> data = [];
+  //     final result = await service.getMessages(roomId: roomId);
+  //     log(result.toString());
+  //
+  //     result.map((entity) => data.add(entity)).toList();
+  //
+  //     if (List.of(data).isNotEmpty) {
+  //       log('success');
+  //       emit(SuccessMessages(data));
+  //     } else {
+  //       log('failed');
+  //
+  //       emit(FailedMessages());
+  //     }
+  //   } catch (error) {
+  //     log('error $error');
+  //
+  //     emit(Error(error.toString()));
+  //   }
+  // }
 }

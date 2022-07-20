@@ -1,6 +1,7 @@
 part of 'auth_cubit.dart';
 
-@immutable
 abstract class AuthState {}
 
-class AuthInitial extends AuthState {}
+class UserWasRegistered extends AuthState {}
+
+class UserDontRegistered extends AuthState {}

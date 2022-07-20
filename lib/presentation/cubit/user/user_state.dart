@@ -18,10 +18,10 @@ class SuccessMessages extends UserState {
 
 class FailedMessages extends UserState {}
 
-class SuccessSearch extends UserState {
+class SuccessLoad extends UserState {
   final List<UserEntity> data;
 
-  SuccessSearch({required this.data});
+  SuccessLoad({required this.data});
 }
 
 class FailedSearch extends UserState {}
