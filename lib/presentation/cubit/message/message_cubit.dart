@@ -57,41 +57,6 @@ class MessageCubit extends Cubit<MessageState> {
     return null;
   }
 
-  //getMessages() async {
-  //     List<MessageEntity> messageList = [];
-  //     messageList.clear();
-  //
-  //     emit(MessageLoading());
-  //
-  //     try {
-  //       final messages = service.getMessages();
-  //
-  //       messages.listen((snapshot) {
-  //         log('snapshot: ${snapshot.docs}');
-  //         if (List.of(snapshot.docs).isNotEmpty) {
-  //           messageList.clear();
-  //
-  //           for (var doc in snapshot.docs) {
-  //             log('doc: ${doc.data()}');
-  //             final message = MessageEntity(
-  //               message: doc.data()['text'],
-  //               createdAt: (doc.data()['createdAt'] as Timestamp).toDate(),
-  //               userId: doc.data()['userId'],
-  //               imageUrl: '',
-  //             );
-  //             messageList.add(message);
-  //
-  //             emit(MessageLoaded(messageList));
-  //           }
-  //         } else {
-  //           emit(MessageEmpty());
-  //         }
-  //       });
-  //     } catch (error) {
-  //       emit(MessageError(error.toString()));
-  //       return null;
-  //     }
-  //   }
   getMessages({required String roomId}) async {
     emit(MessageLoading());
     try {
@@ -119,7 +84,7 @@ class MessageCubit extends Cubit<MessageState> {
         log('success');
         emit(MessageLoaded(dataList));
       } else {
-        log('failed');
+        log('failed $dataList');
 
         emit(MessageError('failed'));
       }
@@ -129,41 +94,4 @@ class MessageCubit extends Cubit<MessageState> {
       emit(MessageError(error.toString()));
     }
   }
-
-  // getMessages({required String roomId}) async {
-  //   List<MessageEntity> messageList = [];
-  //   messageList.clear();
-  //
-  //   emit(MessageLoading());
-  //
-  //   try {
-  //     final messages = service.getMessages();
-  //
-  //     messages.listen((snapshot) {
-  //       log('snapshot: ${snapshot.docs}');
-  //       if (List.of(snapshot.docs).isNotEmpty) {
-  //         messageList.clear();
-  //
-  //         for (var doc in snapshot.docs) {
-  //           log('doc: ${doc.data()}');
-  //           final message = MessageEntity(
-  //             message: doc.data()['text'],
-  //             createdAt: (doc.data()['createdAt'] as Timestamp).toDate(),
-  //             userId: doc.data()['userId'],
-  //             imageUrl: doc.data()['imageUrl'],
-  //             messageId: doc.data()['messageId'],
-  //           );
-  //           messageList.add(message);
-  //
-  //           emit(MessageLoaded(messageList));
-  //         }
-  //       } else {
-  //         emit(MessageEmpty());
-  //       }
-  //     });
-  //   } catch (error) {
-  //     emit(MessageError(error.toString()));
-  //     return null;
-  //   }
-  // }
 }

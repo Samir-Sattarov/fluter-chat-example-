@@ -98,7 +98,7 @@ class MessageService {
           .collection('chatrooms')
           .doc(roomId)
           .collection('messages')
-          .orderBy('createdAt', descending: true)
+          .orderBy('createdDate', descending: true)
           .snapshots();
 
       return result;
