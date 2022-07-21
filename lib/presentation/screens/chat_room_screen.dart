@@ -66,7 +66,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         actions: [
           IconButton(
             onPressed: () async {
-              await BlocProvider.of<MessageCubit>(context).getMessages(
+              await BlocProvider.of<MessageCubit>(context).getRoomMessages(
                 roomId: widget.chatRoomEntity.roomId.toString(),
               );
             },
@@ -127,7 +127,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   imageUrl: '',
                 );
                 controllerMessage.clear();
-                await BlocProvider.of<MessageCubit>(context).getMessages(
+                await BlocProvider.of<MessageCubit>(context).getRoomMessages(
                   roomId: widget.chatRoomEntity.roomId.toString(),
                 );
               },

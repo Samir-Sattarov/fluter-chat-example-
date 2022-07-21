@@ -80,7 +80,7 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                   );
                                   await BlocProvider.of<MessageCubit>(context)
-                                      .getMessages(
+                                      .getRoomMessages(
                                     roomId: roomEntity.roomId.toString(),
                                   );
                                 }

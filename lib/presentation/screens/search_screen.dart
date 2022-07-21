@@ -81,7 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   ),
                                 );
                                 await BlocProvider.of<MessageCubit>(context)
-                                    .getMessages(
+                                    .getRoomMessages(
                                   roomId: roomEntity.roomId.toString(),
                                 );
                               }

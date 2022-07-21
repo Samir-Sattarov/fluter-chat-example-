@@ -57,37 +57,29 @@ class MessageCubit extends Cubit<MessageState> {
     return null;
   }
 
-  getMessages({required String roomId}) async {
+  getRoomMessages({required String roomId}) async {
     emit(MessageLoading());
     try {
       List<MessageEntity> dataList = [];
-      dataList.clear();
       final result = service.getMessages(roomId: roomId);
 
-      result.listen((data) {
-        final snap = data.docs;
-        snap.forEach((doc) {
-          final dataFromDoc = doc.data();
-          dataList.add(MessageEntity.fromJson(dataFromDoc));
-        });
-        emit(MessageLoaded(dataList));
-      });
+      result.listen((snapshot) {
+        log('snapshot: ${snapshot.docs}');
+        dataList.clear();
 
-      // result.listen((snapshot) {
-      //   log('snapshot: ${snapshot.docs}');
-      //   if (List.of(snapshot.docs).isNotEmpty) {
-      //     for (var doc in snapshot.docs) {
-      //       log('doc: ${doc.data()}');
-      //       final data = doc.data();
-      //       final message = MessageEntity.fromJson(data);
-      //       dataList.add(message);
-      //       print('dataList: $dataList');
-      //       emit(MessageLoaded(dataList));
-      //     }
-      //   } else {
-      //     emit(MessageEmpty());
-      //   }
-      // });
+        if (List.of(snapshot.docs).isNotEmpty) {
+          for (var doc in snapshot.docs) {
+            log('doc: ${doc.data()}');
+            final data = doc.data();
+            final message = MessageEntity.fromJson(data);
+            dataList.add(message);
+            print('dataList: $dataList');
+            emit(MessageLoaded(dataList));
+          }
+        } else {
+          emit(MessageEmpty());
+        }
+      });
 
       if (List.of(dataList).isNotEmpty) {
         log('success');

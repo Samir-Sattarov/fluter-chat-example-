@@ -91,8 +91,9 @@ class MessageService {
     }
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> getMessages(
-      {required String roomId}) {
+  Stream<QuerySnapshot<Map<String, dynamic>>> getMessages({
+    required String roomId,
+  }) {
     try {
       final result = fireStore
           .collection('chatrooms')
