@@ -122,15 +122,10 @@ class _SignInScreenState extends State<SignInScreen> {
                   ButtonWidget(
                     onPressed: () async {
                       if (formKey.currentState!.validate()) {
-                        final result =
-                            await BlocProvider.of<SignInCubit>(context).signIn(
+                        BlocProvider.of<SignInCubit>(context).signIn(
                           email: controllerEmail.text.trim(),
                           password: controllerPassword.text.trim(),
                         );
-
-                        if (result) {
-                          await BlocProvider.of<SignInCubit>(context).reset();
-                        }
                       }
                     },
                     text: 'Sign In',

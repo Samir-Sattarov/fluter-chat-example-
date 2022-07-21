@@ -45,58 +45,60 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          TextFormFieldWidget(
-            controller: controllerSearch,
-            hint: 'Name',
-            prefixIcon: Icons.search,
-          ),
-          BlocBuilder<UserCubit, UserState>(builder: (context, state) {
-            if (state is SuccessLoad) {
-              return Column(
-                children: [
-                  ...state.data.map(
-                    (data) => widget.userEntity.uid == data.uid
-                        ? const SizedBox()
-                        : UserWidget(
-                            title: '${data.name} ${data.surname}',
-                            description: data.email!,
-                            imageUrl: data.image!,
-                            uid: data.uid!,
-                            onTap: () async {
-                              ChatRoomEntity? roomEntity =
-                                  await BlocProvider.of<MessageCubit>(context)
-                                      .getChatRoomEntity(
-                                          targetUser: data,
-                                          entity: widget.userEntity);
-                              if (roomEntity != null) {
-                                Navigator.push(
-                                  context,
-                                  ChatRoomScreen.route(
-                                    targetUser: data,
-                                    chatRoomEntity: roomEntity,
-                                    userEntity: widget.userEntity,
-                                  ),
-                                );
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            TextFormFieldWidget(
+              controller: controllerSearch,
+              hint: 'Name',
+              prefixIcon: Icons.search,
+            ),
+            BlocBuilder<UserCubit, UserState>(
+              builder: (context, state) {
+                if (state is SuccessLoad) {
+                  return Column(
+                    children: [
+                      ...state.data.map(
+                        (data) => UserWidget(
+                          title: '${data.name} ${data.surname}',
+                          description: data.email!,
+                          imageUrl: data.image!,
+                          uid: data.uid!,
+                          onTap: () async {
+                            ChatRoomEntity? roomEntity =
                                 await BlocProvider.of<MessageCubit>(context)
-                                    .getRoomMessages(
-                                  roomId: roomEntity.roomId.toString(),
-                                );
-                              }
-                            },
-                          ),
-                  ),
-                ],
-              );
-            }
-            if (state is FailedSearch) {
-              return const Center(child: Text("Something went wrong"));
-            }
-            return const SizedBox();
-          }),
-        ],
+                                    .getChatRoomEntity(
+                                        targetUser: data,
+                                        entity: widget.userEntity);
+                            if (roomEntity != null) {
+                              Navigator.push(
+                                context,
+                                ChatRoomScreen.route(
+                                  targetUser: data,
+                                  chatRoomEntity: roomEntity,
+                                  userEntity: widget.userEntity,
+                                ),
+                              );
+                              await BlocProvider.of<MessageCubit>(context)
+                                  .getRoomMessages(
+                                roomId: roomEntity.roomId.toString(),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                if (state is FailedSearch) {
+                  return const Center(child: Text("Something went wrong"));
+                }
+                return const SizedBox();
+              },
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         elevation: 0,

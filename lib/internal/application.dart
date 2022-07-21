@@ -1,3 +1,4 @@
+import 'package:chat_example/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
 
     // Cubits
 
-    AuthCubit authCubit = AuthCubit(secureStorage);
+    AuthCubit authCubit = AuthCubit(secureStorage, userService);
     UserCubit userCubit = UserCubit(userService);
     SignInCubit signInCubit = SignInCubit(authService, secureStorage);
     SignUpCubit signUpCubit = SignUpCubit(authService);
@@ -47,7 +48,31 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.orange,
         ),
-        home: const SignInScreen(),
+        home: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, state) {
+            if (state is UserWasRegistered) {
+              BlocProvider.of<UserCubit>(context).getUsers();
+              return HomeScreen(userEntity: state.user);
+            } else if (state is UserDontRegistered) {
+              return const SignInScreen();
+            } else if (state is AuthLoading) {
+              return const Material(
+                color: Colors.white,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            } else if (state is AuthError) {
+              return Material(
+                color: Colors.white,
+                child: Center(
+                  child: Text('Error ${state.error}'),
+                ),
+              );
+            }
+            return const SignInScreen();
+          },
+        ),
       ),
     );
   }

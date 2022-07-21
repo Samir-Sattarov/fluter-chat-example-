@@ -1,7 +1,10 @@
+import 'package:chat_example/presentation/utils/image_preload.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/static_images.dart';
+
 class UserWidget extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
   final String title;
   final String description;
   final String uid;
@@ -44,10 +47,16 @@ class UserWidget extends StatelessWidget {
                   child: SizedBox(
                     height: 80,
                     width: 100,
-                    child: Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                    ),
+                    child: imageUrl!.isEmpty && imageUrl == null
+                        ? Image.asset(
+                            StaticImages.iAvatar,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            imageUrl!,
+                            fit: BoxFit.cover,
+                          )
+                      ..preload(),
                   ),
                 ),
                 const SizedBox(width: 10),

@@ -1,6 +1,8 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../entity/user_entity.dart';
 
@@ -8,6 +10,7 @@ class UserService {
   final collection = 'users';
   final storage = FirebaseStorage.instance;
   final fireStore = FirebaseFirestore.instance;
+  final fireAuth = FirebaseAuth.instance;
 
   Future<bool?>? uploadData({
     required UserEntity userEntity,
@@ -34,7 +37,8 @@ class UserService {
           .set(userEntity.toMap());
       return true;
     } catch (error) {
-      print('error $error');
+      log('error $error');
+      throw Exception(error.toString());
     }
     return false;
   }
@@ -48,35 +52,60 @@ class UserService {
           .where('name', isEqualTo: name)
           .get();
 
-      print(result);
+      log(result.toString());
 
-      result.docs.forEach((element) {
+      for (var element in result.docs) {
         data.add(UserEntity.fromJson(element.data()));
-      });
+      }
 
       return data;
     } catch (error) {
-      print('error $error');
+      log('error $error');
 
       throw Exception(error.toString());
     }
   }
 
-  Future<List<UserEntity>> getUsers() async {
+  Future<List<UserEntity>> getUsers({
+    required String currentUserId,
+  }) async {
     try {
       List<UserEntity> data = [];
 
-      final result = await fireStore.collection(collection).get();
+      final result = await fireStore
+          .collection(collection)
+          .where('uid', isNotEqualTo: currentUserId)
+          .get();
 
-      print(result);
+      log(result.toString());
 
-      result.docs.forEach((element) {
+      for (var element in result.docs) {
         data.add(UserEntity.fromJson(element.data()));
-      });
+      }
 
       return data;
     } catch (error) {
-      print('error $error');
+      log('error $error');
+
+      throw Exception(error.toString());
+    }
+  }
+
+  Future<UserEntity?>? getCurrentUser() async {
+    try {
+      final user = fireAuth.currentUser;
+
+      if (user != null) {
+        final result =
+            await fireStore.collection(collection).doc(user.uid).get();
+
+        if (result.exists) {
+          return UserEntity.fromJson(result.data() as Map<String, dynamic>);
+        }
+      }
+      return null;
+    } catch (error) {
+      log('error $error');
 
       throw Exception(error.toString());
     }

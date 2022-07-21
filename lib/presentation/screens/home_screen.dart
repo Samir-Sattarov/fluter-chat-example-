@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -34,8 +32,8 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              await BlocProvider.of<SignInCubit>(context).exit();
               Navigator.push(context, SignInScreen.route());
+              await BlocProvider.of<SignInCubit>(context).exit();
             },
             icon: const Icon(
               Icons.exit_to_app,
@@ -45,59 +43,59 @@ class HomeScreen extends StatelessWidget {
         ],
         centerTitle: true,
       ),
-      body: ListView(
-        children: [
-          BlocBuilder<UserCubit, UserState>(builder: (context, state) {
-            if (state is SuccessLoad) {
-              return RefreshIndicator(
-                onRefresh: () async {
-                  BlocProvider.of<UserCubit>(context).getUsers();
-                },
-                child: Column(
-                  children: [
-                    ...state.data.map(
-                      (data) => userEntity.uid == data.uid
-                          ? const SizedBox()
-                          : UserWidget(
-                              title: '${data.name} ${data.surname}',
-                              description: data.email!,
-                              imageUrl: data.image!,
-                              uid: data.uid!,
-                              onTap: () async {
-                                ChatRoomEntity? roomEntity =
-                                    await BlocProvider.of<MessageCubit>(context)
-                                        .getChatRoomEntity(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          BlocProvider.of<UserCubit>(context).getUsers();
+        },
+        child: ListView(
+          children: [
+            BlocBuilder<UserCubit, UserState>(
+              builder: (context, state) {
+                if (state is SuccessLoad) {
+                  return Column(
+                    children: [
+                      ...state.data.map(
+                        (data) => UserWidget(
+                          title: '${data.name} ${data.surname}',
+                          description: data.email!,
+                          imageUrl: data.image!,
+                          uid: data.uid!,
+                          onTap: () async {
+                            ChatRoomEntity? roomEntity =
+                                await BlocProvider.of<MessageCubit>(context)
+                                    .getChatRoomEntity(
+                              targetUser: data,
+                              entity: userEntity,
+                            );
+                            if (roomEntity != null) {
+                              Navigator.push(
+                                context,
+                                ChatRoomScreen.route(
                                   targetUser: data,
-                                  entity: userEntity,
-                                );
-                                if (roomEntity != null) {
-                                  Navigator.push(
-                                    context,
-                                    ChatRoomScreen.route(
-                                      targetUser: data,
-                                      chatRoomEntity: roomEntity,
-                                      userEntity: userEntity,
-                                    ),
-                                  );
-                                  await BlocProvider.of<MessageCubit>(context)
-                                      .getRoomMessages(
-                                    roomId: roomEntity.roomId.toString(),
-                                  );
-                                }
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              );
-            }
-            if (state is FailedSearch) {
-              return const Center(child: Text("Something went wrong"));
-            }
-            return const SizedBox();
-          }),
-          const SizedBox(height: 30),
-        ],
+                                  chatRoomEntity: roomEntity,
+                                  userEntity: userEntity,
+                                ),
+                              );
+                              await BlocProvider.of<MessageCubit>(context)
+                                  .getRoomMessages(
+                                roomId: roomEntity.roomId.toString(),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                if (state is FailedSearch) {
+                  return const Center(child: Text("Something went wrong"));
+                }
+                return const SizedBox();
+              },
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
