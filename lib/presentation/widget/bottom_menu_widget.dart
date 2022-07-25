@@ -5,6 +5,7 @@ class BottomMenuWidget extends StatelessWidget {
   final TextEditingController controller;
   final IconData icon;
   final Function onSend;
+  final Function onImage;
   final String hintText;
 
   const BottomMenuWidget({
@@ -13,6 +14,7 @@ class BottomMenuWidget extends StatelessWidget {
     required this.icon,
     required this.onSend,
     required this.hintText,
+    required this.onImage,
   }) : super(key: key);
 
   @override
@@ -27,6 +29,10 @@ class BottomMenuWidget extends StatelessWidget {
             hint: hintText,
             controller: controller,
           ),
+        ),
+        IconButton(
+          onPressed: () => onImage(),
+          icon: const Icon(Icons.image_outlined),
         ),
         IconButton(
           onPressed: () => onSend(),

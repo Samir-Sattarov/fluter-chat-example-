@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entity/chat_room_entity.dart';
 import '../../domain/entity/user_entity.dart';
 import '../cubit/auth/sign_in/sign_in_cubit.dart';
-import '../cubit/message/message_cubit.dart';
 import '../cubit/user/user_cubit.dart';
 import '../widget/user_widget.dart';
 import 'auth/sign_in_screen.dart';
@@ -61,26 +59,13 @@ class HomeScreen extends StatelessWidget {
                           imageUrl: data.image!,
                           uid: data.uid!,
                           onTap: () async {
-                            ChatRoomEntity? roomEntity =
-                                await BlocProvider.of<MessageCubit>(context)
-                                    .getChatRoomEntity(
-                              targetUser: data,
-                              entity: userEntity,
+                            Navigator.push(
+                              context,
+                              ConnectChatScreen.route(
+                                userEntity: userEntity,
+                                targetUser: data,
+                              ),
                             );
-                            if (roomEntity != null) {
-                              Navigator.push(
-                                context,
-                                ChatRoomScreen.route(
-                                  targetUser: data,
-                                  chatRoomEntity: roomEntity,
-                                  userEntity: userEntity,
-                                ),
-                              );
-                              await BlocProvider.of<MessageCubit>(context)
-                                  .getRoomMessages(
-                                roomId: roomEntity.roomId.toString(),
-                              );
-                            }
                           },
                         ),
                       ),

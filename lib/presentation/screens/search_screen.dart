@@ -1,15 +1,11 @@
-// ignore_for_file: use_build_context_synchronously
-
-import 'package:chat_example/domain/entity/chat_room_entity.dart';
-import 'package:chat_example/presentation/cubit/user/user_cubit.dart';
-import 'package:chat_example/presentation/screens/chat_room_screen.dart';
-import 'package:chat_example/presentation/widget/text_field_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entity/user_entity.dart';
-import '../cubit/message/message_cubit.dart';
+import '../cubit/user/user_cubit.dart';
+import '../widget/text_field_widget.dart';
 import '../widget/user_widget.dart';
+import 'chat_room_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   static route(UserEntity entity) => MaterialPageRoute(
@@ -66,25 +62,13 @@ class _SearchScreenState extends State<SearchScreen> {
                           imageUrl: data.image!,
                           uid: data.uid!,
                           onTap: () async {
-                            ChatRoomEntity? roomEntity =
-                                await BlocProvider.of<MessageCubit>(context)
-                                    .getChatRoomEntity(
-                                        targetUser: data,
-                                        entity: widget.userEntity);
-                            if (roomEntity != null) {
-                              Navigator.push(
-                                context,
-                                ChatRoomScreen.route(
-                                  targetUser: data,
-                                  chatRoomEntity: roomEntity,
-                                  userEntity: widget.userEntity,
-                                ),
-                              );
-                              await BlocProvider.of<MessageCubit>(context)
-                                  .getRoomMessages(
-                                roomId: roomEntity.roomId.toString(),
-                              );
-                            }
+                            Navigator.push(
+                              context,
+                              ConnectChatScreen.route(
+                                userEntity: widget.userEntity,
+                                targetUser: data,
+                              ),
+                            );
                           },
                         ),
                       ),
@@ -111,20 +95,6 @@ class _SearchScreenState extends State<SearchScreen> {
           Icons.search,
           color: Colors.white,
         ),
-      ),
-    );
-  }
-
-  navigator({
-    required UserEntity userEntity,
-    required ChatRoomEntity chatRoomEntity,
-  }) {
-    Navigator.push(
-      context,
-      ChatRoomScreen.route(
-        targetUser: userEntity,
-        chatRoomEntity: chatRoomEntity,
-        userEntity: widget.userEntity,
       ),
     );
   }

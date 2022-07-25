@@ -12,7 +12,7 @@ class UserService {
   final fireStore = FirebaseFirestore.instance;
   final fireAuth = FirebaseAuth.instance;
 
-  Future<bool?>? uploadData({
+  Future<bool> uploadData({
     required UserEntity userEntity,
     required String name,
     required String surname,
@@ -40,7 +40,6 @@ class UserService {
       log('error $error');
       throw Exception(error.toString());
     }
-    return false;
   }
 
   Future<List<UserEntity>> search({required String name}) async {
@@ -70,7 +69,7 @@ class UserService {
     required String currentUserId,
   }) async {
     try {
-      List<UserEntity> data = [];
+      List<UserEntity> dataList = [];
 
       final result = await fireStore
           .collection(collection)
@@ -80,10 +79,10 @@ class UserService {
       log(result.toString());
 
       for (var element in result.docs) {
-        data.add(UserEntity.fromJson(element.data()));
+        dataList.add(UserEntity.fromJson(element.data()));
       }
 
-      return data;
+      return dataList;
     } catch (error) {
       log('error $error');
 

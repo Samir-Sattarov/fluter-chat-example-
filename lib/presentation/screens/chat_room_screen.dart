@@ -1,43 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entity/chat_room_entity.dart';
 import '../../domain/entity/user_entity.dart';
-import '../cubit/message/message_cubit.dart';
+import '../cubit/chatroom/chat_room_cubit.dart';
+import '../cubit/message/messaging_cubit.dart';
 import '../widget/bottom_menu_widget.dart';
 import '../widget/message_widget.dart';
 
-class ChatRoomScreen extends StatefulWidget {
+class ConnectChatScreen extends StatefulWidget {
+  final UserEntity targetUser;
+  final UserEntity userEntity;
+
   static route({
     required UserEntity targetUser,
-    required ChatRoomEntity chatRoomEntity,
     required UserEntity userEntity,
   }) =>
       MaterialPageRoute(
-        builder: (context) => ChatRoomScreen(
-          targetUser: targetUser,
-          chatRoomEntity: chatRoomEntity,
+        builder: (context) => ConnectChatScreen(
           userEntity: userEntity,
+          targetUser: targetUser,
         ),
       );
 
-  final UserEntity targetUser;
-  final ChatRoomEntity chatRoomEntity;
-  final UserEntity userEntity;
-
-  const ChatRoomScreen({
-    super.key,
+  const ConnectChatScreen({
+    Key? key,
     required this.targetUser,
-    required this.chatRoomEntity,
     required this.userEntity,
-  });
+  }) : super(key: key);
 
   @override
-  State<ChatRoomScreen> createState() => _ChatRoomScreenState();
+  State<ConnectChatScreen> createState() => _ConnectChatScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
-  final TextEditingController controllerMessage = TextEditingController();
+class _ConnectChatScreenState extends State<ConnectChatScreen> {
+  final TextEditingController _controller = TextEditingController();
+
+  MessagingCubit? messagingCubit;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    messagingCubit?.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,78 +68,96 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await BlocProvider.of<MessageCubit>(context).getRoomMessages(
-                roomId: widget.chatRoomEntity.roomId.toString(),
-              );
-            },
-            icon: const Icon(
-              Icons.refresh,
-              color: Colors.white,
-            ),
-          )
-        ],
       ),
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            BlocBuilder<MessageCubit, MessageState>(
-              builder: (context, state) {
-                if (state is MessageLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                }
-                if (state is MessageLoaded) {
-                  return Expanded(
-                    child: ListView.builder(
-                      itemCount: state.data.length,
-                      reverse: true,
-                      itemBuilder: (context, index) {
-                        final message = state.data[index];
-
-                        return MessageWidget(
-                          messageId: message.messageId,
-                          sender: message.userId,
-                          message: message.message,
-                          createdDate: message.createdDate,
-                          isMe: message.userId == widget.userEntity.uid,
-                        );
+      body: BlocBuilder<ChatRoomCubit, ChatRoomState>(
+        bloc: BlocProvider.of<ChatRoomCubit>(context)
+          ..load(targetUser: widget.targetUser, entity: widget.userEntity),
+        builder: (context, state) {
+          if (state is ChatRoomLoaded) {
+            return BlocProvider(
+              create: (context) {
+                return messagingCubit = MessagingCubit(
+                  chatRoom: state.chatRoom,
+                  me: widget.userEntity,
+                )..getRoomMessages();
+              },
+              child: RefreshIndicator(
+                color: Colors.green.shade200,
+                onRefresh: () async {
+                  messagingCubit?.getRoomMessages();
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    BlocBuilder<MessagingCubit, MessagingState>(
+                      bloc: messagingCubit,
+                      builder: (context, state) {
+                        if (state is MessagingLoading) {
+                          return const Expanded(
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        if (state is MessageLoaded) {
+                          return Expanded(
+                            child: ListView.builder(
+                              itemCount: state.message.length,
+                              padding: const EdgeInsets.all(24),
+                              reverse: true,
+                              itemBuilder: (context, index) {
+                                final message = state.message[index];
+                                return MessageWidget(
+                                  onTap: () {},
+                                  isMe:
+                                      message.senderId == widget.userEntity.uid,
+                                  onLongPress: () {},
+                                  message: message,
+                                );
+                              },
+                            ),
+                          );
+                        }
+                        if (state is MessagingError) {
+                          return Text('Error ${state.error}');
+                        }
+                        return const SizedBox();
                       },
                     ),
-                  );
-                }
-                return const SizedBox();
-              },
-            ),
-            const SizedBox(height: 10),
-            BottomMenuWidget(
-              icon: Icons.message,
-              controller: controllerMessage,
-              hintText: 'Message',
-              onSend: () async {
-                BlocProvider.of<MessageCubit>(context).sendMessage(
-                  userEntity: widget.userEntity,
-                  message: controllerMessage.text.trim(),
-                  roomId: widget.chatRoomEntity.roomId.toString(),
-                  imageUrl: '',
-                );
-                controllerMessage.clear();
-                await BlocProvider.of<MessageCubit>(context).getRoomMessages(
-                  roomId: widget.chatRoomEntity.roomId.toString(),
-                );
-              },
-            ),
-            const SizedBox(height: 10)
-          ],
-        ),
+                    const SizedBox(height: 10),
+                    BottomMenuWidget(
+                      icon: Icons.message,
+                      controller: _controller,
+                      hintText: 'Message',
+                      onSend: () async {
+                        messagingCubit?.sendMessage(
+                          userEntity: widget.userEntity,
+                          message: _controller.text.trim(),
+                          replyMessage: null,
+                        );
+                        _controller.clear();
+
+                        messagingCubit?.getRoomMessages();
+                      },
+                      onImage: () {},
+                    ),
+                    const SizedBox(height: 10)
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (state is ChatRoomLoading) {
+            return const Center(child: Text('Loading chatroom ....'));
+          }
+
+          if (state is ChatRoomFailure) {
+            return Center(child: Text('chatroom failed ${state.message}'));
+          }
+
+          return const SizedBox();
+        },
       ),
     );
   }

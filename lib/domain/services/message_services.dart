@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,13 +9,15 @@ import '../entity/user_entity.dart';
 
 class MessageService {
   final fireStore = FirebaseFirestore.instance;
-  final collectionMessages = 'messages';
+  final _chatRoomCollection = 'chatRooms';
+  final _messageCollection = 'messages';
 
   sendMessage({
     required UserEntity userEntity,
     required String? message,
     required String roomId,
-    required String? imageUrl,
+    MessageEntity? replayMessage,
+    String? image,
   }) async {
     try {
       if (message!.isNotEmpty) {
@@ -24,70 +25,191 @@ class MessageService {
           messageId: uuid.v1(),
           message: message,
           createdDate: DateTime.now(),
-          imageUrl: imageUrl,
-          userId: userEntity.uid,
+          senderId: userEntity.uid!,
+          senderName: userEntity.fullName,
+          replyMessage: replayMessage,
+          isRead: false,
         );
 
-        log('newMessage: $newMessage');
+        await fireStore.collection(_chatRoomCollection).doc(roomId).update({
+          'lastMessage': newMessage.toJson(),
+        });
 
         await fireStore
-            .collection('chatrooms')
+            .collection(_chatRoomCollection)
             .doc(roomId)
-            .collection('messages')
+            .collection(_messageCollection)
             .doc(newMessage.messageId)
-            .set(newMessage.toMap());
-
-        log('sended');
+            .set(newMessage.toJson());
       }
 
       return true;
     } catch (error) {
-      log('error $error');
       return false;
     }
   }
 
-  Future<ChatRoomEntity?> getChatRoomEntity({
-    required UserEntity targetUser,
-    required UserEntity entity,
+  Future<int> getNotReadMessageForChatRoomEntityCount(
+    ChatRoomEntity chatRoom,
+    UserEntity sender,
+  ) async {
+    try {
+      QuerySnapshot snap = await fireStore
+          .collection(_chatRoomCollection)
+          .doc(chatRoom.roomId)
+          .collection(_messageCollection)
+          .where('senderId', isEqualTo: sender.uid)
+          .where('isRead', isEqualTo: false)
+          .get();
+
+      return snap.docs.length;
+    } catch (error) {
+      return 1000;
+    }
+  }
+
+  getNewMessage(
+    UserEntity user,
+  ) {
+    try {
+      List<ChatRoomEntity> chatRoomList = [];
+      List<MessageEntity> messageList = [];
+
+      final chatRooms = fireStore
+          .collection(_chatRoomCollection)
+          .where('participants.${user.uid}', isEqualTo: true)
+          .snapshots();
+
+      chatRooms.listen((snapshot) {
+        for (var doc in snapshot.docs) {
+          chatRoomList.add(ChatRoomEntity.fromJson(doc.data()));
+        }
+
+        chatRoomList.forEach((element) async {
+          QuerySnapshot snap = await fireStore
+              .collection(_chatRoomCollection)
+              .doc(element.roomId)
+              .collection(_messageCollection)
+              .where('senderId', isNotEqualTo: user.uid)
+              .where('isRead', isEqualTo: false)
+              .get();
+
+          for (var doc in snap.docs) {
+            messageList.add(MessageEntity.fromJson(doc.data()));
+          }
+        });
+      });
+    } catch (error) {
+      throw Exception(error.toString());
+    }
+  }
+
+  void updateAllMessageToRead({
+    required String roomId,
+    required UserEntity me,
   }) async {
-    ChatRoomEntity? chatRoomEntity;
-    QuerySnapshot snapshot = await FirebaseFirestore.instance
-        .collection('chatrooms')
-        .where('participants.${entity.uid}', isEqualTo: true)
-        .where('participants.${targetUser.uid}', isEqualTo: true)
-        .get();
+    try {
+      final bool isMe;
+      await fireStore
+          .collection(_chatRoomCollection)
+          .doc(roomId)
+          .collection(_messageCollection)
+          .where('senderId', isNotEqualTo: me.uid)
+          .get()
+          .then((value) {
+        for (var element in value.docs) {
+          fireStore
+              .collection(_chatRoomCollection)
+              .doc(roomId)
+              .collection(_messageCollection)
+              .doc(element.id)
+              .update({
+            'isRead': true,
+          });
+        }
+      });
 
-    if (snapshot.docs.isNotEmpty) {
-      final dataFromDoc = snapshot.docs.first.data();
-      log('all room already exist $dataFromDoc');
+      final DocumentSnapshot<Map<String, dynamic>> chatRoom =
+          await fireStore.collection(_chatRoomCollection).doc(roomId).get();
 
-      final ChatRoomEntity existChatroom =
-          ChatRoomEntity.fromJson(dataFromDoc as Map<String, dynamic>);
+      if (chatRoom['lastMessage'] != null) {
+        isMe = chatRoom['lastMessage']['senderId'] == me.uid ? true : false;
+      } else {
+        isMe = false;
+      }
 
-      chatRoomEntity = existChatroom;
-      return chatRoomEntity;
-    } else {
-      log('null');
+      if (!isMe &&
+          chatRoom['lastMessage'] != null &&
+          chatRoom['lastMessage']['isRead'] == false) {
+        fireStore.collection(_chatRoomCollection).doc(roomId).update({
+          'lastMessage.isRead': true,
+        });
+      }
+    } catch (error) {
+      throw Exception(error.toString());
+    }
+  }
 
-      ChatRoomEntity newChatRoomEntity = ChatRoomEntity(
-        roomId: uuid.v1(),
-        participants: {
-          entity.uid.toString(): true,
-          targetUser.uid.toString(): true,
-        },
-        lastMessage: "",
-      );
+  Future<ChatRoomEntity> getChatRoomEntity({
+    required UserEntity targetUser,
+    required UserEntity user,
+  }) async {
+    try {
+      ChatRoomEntity? chatRoomEntity;
+      QuerySnapshot snapshot = await fireStore
+          .collection(_chatRoomCollection)
+          .where('participants.${targetUser.uid}', isEqualTo: true)
+          .where('participants.${user.uid}', isEqualTo: true)
+          .get();
 
-      await FirebaseFirestore.instance
-          .collection('chatrooms')
-          .doc(newChatRoomEntity.roomId)
-          .set(newChatRoomEntity.toMap());
+      if (snapshot.docs.isNotEmpty) {
+        final dataFromDoc = snapshot.docs.first.data();
 
-      chatRoomEntity = newChatRoomEntity;
+        final ChatRoomEntity existChatroom =
+            ChatRoomEntity.fromJson(dataFromDoc as Map<String, dynamic>);
 
-      log('New chatroom crated');
-      return chatRoomEntity;
+        chatRoomEntity = existChatroom;
+        return chatRoomEntity;
+      } else {
+        final id = uuid.v1();
+        ChatRoomEntity newChatRoomEntityEntity = ChatRoomEntity(
+          roomId: id,
+          participants: {
+            user.uid.toString(): true,
+            targetUser.uid.toString(): true,
+          },
+          lastMessage: null,
+        );
+
+        await fireStore
+            .collection(_chatRoomCollection)
+            .doc(newChatRoomEntityEntity.roomId)
+            .set(newChatRoomEntityEntity.toMap());
+
+        chatRoomEntity = newChatRoomEntityEntity;
+
+        return chatRoomEntity;
+      }
+    } catch (error) {
+      log(error.toString());
+      throw Exception(error.toString());
+    }
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getLastMessage({
+    required String userId,
+    required String senderId,
+  }) {
+    try {
+      final result = fireStore
+          .collection(_chatRoomCollection)
+          .where('participants.$userId', isEqualTo: true)
+          .where('participants.$senderId', isEqualTo: true)
+          .snapshots();
+
+      return result;
+    } catch (error) {
+      throw Exception(error.toString());
     }
   }
 
@@ -96,16 +218,14 @@ class MessageService {
   }) {
     try {
       final result = fireStore
-          .collection('chatrooms')
+          .collection(_chatRoomCollection)
           .doc(roomId)
-          .collection('messages')
-          .orderBy('createdDate', descending: true)
+          .collection(_messageCollection)
+          .orderBy('createdAt', descending: true)
           .snapshots();
 
       return result;
     } catch (error) {
-      log('error $error');
-
       throw Exception(error.toString());
     }
   }

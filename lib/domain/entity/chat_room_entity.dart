@@ -1,9 +1,11 @@
-class ChatRoomEntity {
-  final String? roomId;
-  final Map<String, dynamic>? participants;
-  final String? lastMessage;
+import 'package:chat_example/domain/entity/message_entity.dart';
 
-  ChatRoomEntity({
+class ChatRoomEntity {
+  final String roomId;
+  final Map<String, dynamic>? participants;
+  final MessageEntity? lastMessage;
+
+  const ChatRoomEntity({
     required this.roomId,
     required this.participants,
     required this.lastMessage,
@@ -13,7 +15,9 @@ class ChatRoomEntity {
     return ChatRoomEntity(
       participants: json['participants'],
       roomId: json['roomId'],
-      lastMessage: json['lastMessage'],
+      lastMessage: json['lastMessage'] != null
+          ? MessageEntity.fromJson(json['lastMessage'])
+          : null,
     );
   }
 
@@ -21,7 +25,7 @@ class ChatRoomEntity {
     return {
       "roomId": roomId,
       "participants": participants,
-      "lastMessage": lastMessage,
+      "lastMessage": lastMessage?.toJson(),
     };
   }
 }

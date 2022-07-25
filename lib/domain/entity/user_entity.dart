@@ -13,6 +13,7 @@ class UserEntity {
     required this.image,
   });
 
+  String get fullName => '$name $surname';
   factory UserEntity.fromJson(Map<String, dynamic> json) {
     return UserEntity(
       uid: json['uid'],

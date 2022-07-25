@@ -78,14 +78,9 @@ class UserCubit extends Cubit<UserState> {
 
       result.map((entity) => data.add(entity)).toList();
 
-      log(result.toString());
-
       if (List.of(data).isNotEmpty) {
-        log('success');
         emit(SuccessLoad(data: data));
       } else {
-        log('failed');
-
         emit(FailedSearch());
       }
     } catch (error) {

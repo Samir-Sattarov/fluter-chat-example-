@@ -1,37 +1,51 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// ignore: depend_on_referenced_packages
+import 'package:intl/intl.dart';
 
 class MessageEntity {
-  final String? message;
-  final DateTime? createdDate;
-  final String? userId;
-  final String? imageUrl;
-  final String? messageId;
+  final String senderId;
+  final String message;
+  final String messageId;
+  final bool isRead;
+  final MessageEntity? replyMessage;
+  final String? senderName;
 
-  MessageEntity({
+  final DateTime createdDate;
+
+  const MessageEntity({
+    required this.messageId,
+    required this.senderId,
     required this.message,
     required this.createdDate,
-    required this.userId,
-    required this.messageId,
-    required this.imageUrl,
+    required this.isRead,
+    this.senderName,
+    this.replyMessage,
   });
 
-  factory MessageEntity.fromJson(Map<String, dynamic> json) {
+  factory MessageEntity.fromJson(json) {
     return MessageEntity(
+      senderId: json['senderId'],
       message: json['message'],
-      createdDate: (json['createdDate'] as Timestamp).toDate(),
-      userId: json['userId'],
-      imageUrl: json['imageUrl'],
+      createdDate: DateTime.parse(json['createdAt'].toDate().toString()),
       messageId: json['messageId'],
+      replyMessage: json['replayMessage'] != null
+          ? MessageEntity.fromJson(json['replyMessage'])
+          : null,
+      senderName: json['senderName'],
+      isRead: json['isRead'],
     );
   }
 
-  Map<String, dynamic> toMap() {
+  get dateTime => DateFormat('dd MMM H:mm').format(createdDate);
+
+  Map<String, dynamic> toJson() {
     return {
-      'message': message,
-      'createdDate': createdDate,
-      'userId': userId,
-      'imageUrl': imageUrl,
-      'messageId': messageId,
+      "senderId": senderId,
+      "message": message,
+      "createdAt": createdDate,
+      "messageId": messageId,
+      "replyMessage": replyMessage?.toJson(),
+      "senderName": senderName,
+      "isRead": isRead,
     };
   }
 }

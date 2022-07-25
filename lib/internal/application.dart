@@ -1,4 +1,3 @@
-import 'package:chat_example/presentation/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,9 +7,10 @@ import '../domain/services/user_service.dart';
 import '../presentation/cubit/auth/auth/auth_cubit.dart';
 import '../presentation/cubit/auth/sign_in/sign_in_cubit.dart';
 import '../presentation/cubit/auth/sign_up/sign_up_cubit.dart';
-import '../presentation/cubit/message/message_cubit.dart';
+import '../presentation/cubit/chatroom/chat_room_cubit.dart';
 import '../presentation/cubit/user/user_cubit.dart';
 import '../presentation/screens/auth/sign_in_screen.dart';
+import '../presentation/screens/home_screen.dart';
 import '../presentation/storage/secure_storage.dart';
 
 class MyApp extends StatelessWidget {
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
     UserCubit userCubit = UserCubit(userService);
     SignInCubit signInCubit = SignInCubit(authService, secureStorage);
     SignUpCubit signUpCubit = SignUpCubit(authService);
-    MessageCubit messageCubit = MessageCubit(messageService);
+    ChatRoomCubit chatRoomCubit = ChatRoomCubit(messageService);
 
     return MultiBlocProvider(
       providers: [
@@ -40,7 +40,8 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (BuildContext context) => userCubit),
         BlocProvider(create: (BuildContext context) => signInCubit),
         BlocProvider(create: (BuildContext context) => signUpCubit),
-        BlocProvider(create: (BuildContext context) => messageCubit),
+        BlocProvider(create: (BuildContext context) => signUpCubit),
+        BlocProvider(create: (BuildContext context) => chatRoomCubit),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',
@@ -52,7 +53,8 @@ class MyApp extends StatelessWidget {
           builder: (context, state) {
             if (state is UserWasRegistered) {
               BlocProvider.of<UserCubit>(context).getUsers();
-              return HomeScreen(userEntity: state.user);
+              final user = state.user;
+              return HomeScreen(userEntity: user);
             } else if (state is UserDontRegistered) {
               return const SignInScreen();
             } else if (state is AuthLoading) {

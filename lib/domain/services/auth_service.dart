@@ -10,12 +10,13 @@ class AuthService {
   final firebaseAuth = FirebaseAuth.instance;
   final firebaseFireStore = FirebaseFirestore.instance;
   final collectionName = 'users';
+  final _key = 'email';
 
   final SecureStorage storage = SecureStorage();
+
   exit() async {
     await firebaseAuth.signOut();
-    const key = 'email';
-    storage.delete(key: key);
+    storage.delete(key: _key);
   }
 
   Future<UserEntity?>? signIn({
@@ -69,7 +70,6 @@ class AuthService {
     if (credential != null) {
       String uid = credential.user!.uid;
 
-      log('credential not null creating collection ');
       UserEntity user = UserEntity(
         uid: uid,
         email: email,
