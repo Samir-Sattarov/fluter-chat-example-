@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:chat_example/domain/entity/user_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,14 +40,18 @@ class MessagingCubit extends Cubit<MessagingState> {
   }
 
   Future<void> sendMessage({
-    required UserEntity userEntity,
+    required UserEntity currentUser,
+    required UserEntity receiver,
     required String? message,
+    required File? imageUrl,
     MessageEntity? replyMessage,
   }) async {
     try {
       final result = await service.sendMessage(
-        userEntity: userEntity,
-        message: message,
+        currentUser: currentUser,
+        receiver: receiver,
+        message: message != null && message.isNotEmpty ? message : null,
+        image: imageUrl,
         roomId: chatRoom.roomId,
         replayMessage: replyMessage,
       );

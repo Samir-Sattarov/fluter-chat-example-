@@ -57,7 +57,7 @@ class HomeScreen extends StatelessWidget {
                           title: '${data.name} ${data.surname}',
                           description: data.email!,
                           imageUrl: data.image!,
-                          uid: data.uid!,
+                          uid: data.uid,
                           onTap: () async {
                             Navigator.push(
                               context,
@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                   );
                 }
                 if (state is FailedSearch) {
-                  return const Center(child: Text("Something went wrong"));
+                  return const Center(child: Text("Failed Search"));
                 }
                 return const SizedBox();
               },

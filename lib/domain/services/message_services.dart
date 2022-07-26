@@ -1,6 +1,8 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../../main.dart';
 import '../entity/chat_room_entity.dart';
@@ -9,43 +11,80 @@ import '../entity/user_entity.dart';
 
 class MessageService {
   final fireStore = FirebaseFirestore.instance;
+  final fireStorage = FirebaseStorage.instance;
   final _chatRoomCollection = 'chatRooms';
   final _messageCollection = 'messages';
 
   sendMessage({
-    required UserEntity userEntity,
+    required UserEntity currentUser,
+    required UserEntity receiver,
     required String? message,
     required String roomId,
     MessageEntity? replayMessage,
-    String? image,
+    File? image,
   }) async {
     try {
-      if (message!.isNotEmpty) {
-        MessageEntity newMessage = MessageEntity(
-          messageId: uuid.v1(),
-          message: message,
-          createdDate: DateTime.now(),
-          senderId: userEntity.uid!,
-          senderName: userEntity.fullName,
-          replyMessage: replayMessage,
-          isRead: false,
-        );
+      String? imageFromServer;
 
-        await fireStore.collection(_chatRoomCollection).doc(roomId).update({
-          'lastMessage': newMessage.toJson(),
-        });
+      if (image != null) {
+        UploadTask uploadTask = fireStorage
+            .ref()
+            .child('chat_images')
+            .child(currentUser.uid.toString())
+            .putFile(image);
 
-        await fireStore
-            .collection(_chatRoomCollection)
-            .doc(roomId)
-            .collection(_messageCollection)
-            .doc(newMessage.messageId)
-            .set(newMessage.toJson());
+        TaskSnapshot snapshot = await uploadTask;
+        String imageUrl = await snapshot.ref.getDownloadURL();
+        imageFromServer = imageUrl;
       }
+
+      String type = getMessageType(
+        message: message,
+        image: imageFromServer,
+      );
+      MessageEntity newMessage = MessageEntity(
+        messageId: uuid.v1(),
+        message: message,
+        createdDate: DateTime.now(),
+        senderId: currentUser.uid,
+        receiverId: receiver.uid,
+        image: imageFromServer,
+        senderName: currentUser.fullName,
+        replyMessage: replayMessage,
+        isRead: false,
+        messageType: type,
+      );
+
+      await fireStore.collection(_chatRoomCollection).doc(roomId).update({
+        'lastMessage': newMessage.toJson(),
+      });
+
+      await fireStore
+          .collection(_chatRoomCollection)
+          .doc(roomId)
+          .collection(_messageCollection)
+          .doc(newMessage.messageId)
+          .set(newMessage.toJson());
 
       return true;
     } catch (error) {
+      log(error.toString());
       return false;
+    }
+  }
+
+  getMessageType({required String? message, required String? image}) {
+    if (message != null && message.isNotEmpty) {
+      return 'text';
+    } else if (image != null && image.isNotEmpty) {
+      return 'image';
+    } else if (message != null &&
+        message.isNotEmpty &&
+        image != null &&
+        image.isNotEmpty) {
+      return 'textWithImage';
+    } else {
+      return 'text';
     }
   }
 

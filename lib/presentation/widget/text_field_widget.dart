@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class TextFormFieldWidget extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
-  final IconData prefixIcon;
+  final IconData? prefixIcon;
   final String? Function(String?)? validator;
   final EdgeInsets? padding;
-  const TextFormFieldWidget(
-      {Key? key,
-      required this.controller,
-      required this.hint,
-      required this.prefixIcon,
-      this.validator,
-      this.padding})
-      : super(key: key);
+  final Color? color;
+  final bool enableShadow;
+  const TextFormFieldWidget({
+    Key? key,
+    required this.controller,
+    required this.hint,
+    this.prefixIcon,
+    this.validator,
+    this.padding,
+    this.color,
+    this.enableShadow = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,23 +26,25 @@ class TextFormFieldWidget extends StatelessWidget {
       child: Container(
         width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 1,
-            )
-          ],
+          boxShadow: enableShadow
+              ? [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  )
+                ]
+              : [],
         ),
         child: TextFormField(
           validator: validator,
           controller: controller,
           decoration: InputDecoration(
-            fillColor: Colors.white,
+            fillColor: color ?? Colors.white,
             filled: true,
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.orange, width: 3),
+              borderSide: BorderSide(color: Colors.blue.shade500, width: 3),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -59,10 +64,12 @@ class TextFormFieldWidget extends StatelessWidget {
               color: Colors.grey.shade700,
               fontWeight: FontWeight.w600,
             ),
-            prefixIcon: Icon(
-              prefixIcon,
-              size: 30,
-            ),
+            prefixIcon: prefixIcon != null
+                ? Icon(
+                    prefixIcon,
+                    size: 30,
+                  )
+                : null,
           ),
         ),
       ),

@@ -60,7 +60,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           title: '${data.name} ${data.surname}',
                           description: data.email!,
                           imageUrl: data.image!,
-                          uid: data.uid!,
+                          uid: data.uid,
                           onTap: () async {
                             Navigator.push(
                               context,

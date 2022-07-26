@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../domain/entity/user_entity.dart';
 import '../cubit/chatroom/chat_room_cubit.dart';
@@ -8,8 +12,8 @@ import '../widget/bottom_menu_widget.dart';
 import '../widget/message_widget.dart';
 
 class ConnectChatScreen extends StatefulWidget {
-  final UserEntity targetUser;
-  final UserEntity userEntity;
+  final UserEntity receiver;
+  final UserEntity currentUser;
 
   static route({
     required UserEntity targetUser,
@@ -17,15 +21,15 @@ class ConnectChatScreen extends StatefulWidget {
   }) =>
       MaterialPageRoute(
         builder: (context) => ConnectChatScreen(
-          userEntity: userEntity,
-          targetUser: targetUser,
+          currentUser: userEntity,
+          receiver: targetUser,
         ),
       );
 
   const ConnectChatScreen({
     Key? key,
-    required this.targetUser,
-    required this.userEntity,
+    required this.receiver,
+    required this.currentUser,
   }) : super(key: key);
 
   @override
@@ -36,6 +40,7 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
   final TextEditingController _controller = TextEditingController();
 
   MessagingCubit? messagingCubit;
+  File? _image;
 
   @override
   void dispose() {
@@ -59,11 +64,11 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
           children: [
             CircleAvatar(
               backgroundColor: Colors.grey.shade200,
-              backgroundImage: NetworkImage(widget.targetUser.image!),
+              backgroundImage: NetworkImage(widget.receiver.image!),
             ),
             const SizedBox(width: 20),
             Text(
-              '${widget.targetUser.name} ${widget.targetUser.surname}',
+              '${widget.receiver.name} ${widget.receiver.surname}',
               style: const TextStyle(color: Colors.white),
             ),
           ],
@@ -71,14 +76,14 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
       ),
       body: BlocBuilder<ChatRoomCubit, ChatRoomState>(
         bloc: BlocProvider.of<ChatRoomCubit>(context)
-          ..load(targetUser: widget.targetUser, entity: widget.userEntity),
+          ..load(targetUser: widget.receiver, entity: widget.currentUser),
         builder: (context, state) {
           if (state is ChatRoomLoaded) {
             return BlocProvider(
               create: (context) {
                 return messagingCubit = MessagingCubit(
                   chatRoom: state.chatRoom,
-                  me: widget.userEntity,
+                  me: widget.currentUser,
                 )..getRoomMessages();
               },
               child: RefreshIndicator(
@@ -109,8 +114,8 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
                                 final message = state.message[index];
                                 return MessageWidget(
                                   onTap: () {},
-                                  isMe:
-                                      message.senderId == widget.userEntity.uid,
+                                  isMe: message.senderId ==
+                                      widget.currentUser.uid,
                                   onLongPress: () {},
                                   message: message,
                                 );
@@ -126,20 +131,22 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
                     ),
                     const SizedBox(height: 10),
                     BottomMenuWidget(
-                      icon: Icons.message,
                       controller: _controller,
                       hintText: 'Message',
                       onSend: () async {
                         messagingCubit?.sendMessage(
-                          userEntity: widget.userEntity,
+                          currentUser: widget.currentUser,
+                          receiver: widget.receiver,
                           message: _controller.text.trim(),
                           replyMessage: null,
+                          imageUrl: _image,
                         );
                         _controller.clear();
+                        _image = null;
 
                         messagingCubit?.getRoomMessages();
                       },
-                      onImage: () {},
+                      onImage: () => _pickImage(source: ImageSource.gallery),
                     ),
                     const SizedBox(height: 10)
                   ],
@@ -160,5 +167,20 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
         },
       ),
     );
+  }
+
+  _pickImage({required ImageSource source}) async {
+    try {
+      final picker = ImagePicker();
+      var image = await picker.pickImage(source: source);
+
+      if (image == null) return;
+
+      final imageTemporary = File(image.path);
+
+      setState(() => _image = imageTemporary);
+    } on PlatformException catch (error) {
+      throw PlatformException(code: error.toString());
+    }
   }
 }

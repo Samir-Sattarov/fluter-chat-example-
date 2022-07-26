@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         title: 'Flutter Demo',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primarySwatch: Colors.orange,
+          primarySwatch: Colors.blue,
         ),
         home: BlocBuilder<AuthCubit, AuthState>(
           builder: (context, state) {

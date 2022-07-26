@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entity/message_entity.dart';
@@ -37,34 +38,35 @@ class MessageWidget extends StatelessWidget {
                 color: isMe ? Colors.brown.shade400 : Colors.brown.shade600,
               ),
               child: Padding(
-                padding: message.message.isNotEmpty
+                padding: message.message != null && message.message!.isNotEmpty
                     ? const EdgeInsets.symmetric(horizontal: 10, vertical: 10)
                     : EdgeInsets.zero,
                 child: Column(
                   children: [
-                    Text(
-                      message.message.toString(),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    // if (message != null && message!.isNotEmpty)
-                    //   Text(
-                    //     message.toString(),
-                    //     style: const TextStyle(color: Colors.white),
-                    //   ),
-                    // if (message != null &&
-                    //     message!.isNotEmpty &&
-                    //     imageUrl != null)
-                    //   const SizedBox(height: 5),
-                    // if (imageUrl != null)
-                    //   ClipRRect(
-                    //     borderRadius: BorderRadius.circular(10),
-                    //     child: Image.network(
-                    //       imageUrl!,
-                    //       fit: BoxFit.cover,
-                    //       height: 200,
-                    //       width: 200,
-                    //     ),
-                    //   ),
+                    if (message.message != null)
+                      Text(
+                        message.message.toString(),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    if (message.image != null)
+                      CachedNetworkImage(
+                        imageUrl: message.image!,
+                        errorWidget: (context, url, error) =>
+                            const Text("error"),
+                        imageBuilder: (context, imageProvider) => ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image(
+                            image: imageProvider,
+                            fit: BoxFit.cover,
+                            width: 200,
+                            height: 200,
+                          ),
+                        ),
+                        placeholder: (context, url) =>
+                            const CircularProgressIndicator(
+                          backgroundColor: Colors.grey,
+                        ),
+                      ),
                   ],
                 ),
               ),
