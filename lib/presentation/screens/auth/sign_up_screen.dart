@@ -85,7 +85,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             height: MediaQuery.of(context).size.height * 0.15),
                         Center(
                           child: Image.asset(
-                            StaticImages.iFirebaseLogo,
+                            StaticImages.iFirebaseLogoBlue,
                             height: 100,
                             fit: BoxFit.cover,
                           ),
