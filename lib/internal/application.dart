@@ -7,6 +7,7 @@ import '../domain/services/user_service.dart';
 import '../presentation/cubit/auth/auth/auth_cubit.dart';
 import '../presentation/cubit/auth/sign_in/sign_in_cubit.dart';
 import '../presentation/cubit/auth/sign_up/sign_up_cubit.dart';
+import '../presentation/cubit/chat_list/chat_list_cubit.dart';
 import '../presentation/cubit/chatroom/chat_room_cubit.dart';
 import '../presentation/cubit/user/user_cubit.dart';
 import '../presentation/screens/auth/sign_in_screen.dart';
@@ -33,6 +34,17 @@ class MyApp extends StatelessWidget {
     SignInCubit signInCubit = SignInCubit(authService, secureStorage);
     SignUpCubit signUpCubit = SignUpCubit(authService);
     ChatRoomCubit chatRoomCubit = ChatRoomCubit(messageService);
+    late ChatListCubit chatListCubit;
+    authCubit.stream.listen((AuthState state) {
+      if (state is UserWasRegistered) {
+        final user = state.user;
+        chatListCubit = ChatListCubit(
+          userService: userService,
+          messageService: messageService,
+          me: user,
+        );
+      }
+    });
 
     return MultiBlocProvider(
       providers: [
@@ -42,6 +54,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (BuildContext context) => signUpCubit),
         BlocProvider(create: (BuildContext context) => signUpCubit),
         BlocProvider(create: (BuildContext context) => chatRoomCubit),
+        BlocProvider(create: (BuildContext context) => chatListCubit),
       ],
       child: MaterialApp(
         title: 'Flutter Demo',

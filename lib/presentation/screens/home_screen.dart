@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entity/user_entity.dart';
 import '../cubit/auth/sign_in/sign_in_cubit.dart';
-import '../cubit/user/user_cubit.dart';
+import '../cubit/chat_list/chat_list_cubit.dart';
 import '../widget/user_widget.dart';
 import 'auth/sign_in_screen.dart';
 import 'chat_room_screen.dart';
@@ -43,43 +43,49 @@ class HomeScreen extends StatelessWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          BlocProvider.of<UserCubit>(context).getUsers();
+          BlocProvider.of<ChatListCubit>(context).load();
         },
-        child: ListView(
-          children: [
-            BlocBuilder<UserCubit, UserState>(
-              builder: (context, state) {
-                if (state is SuccessLoad) {
-                  return Column(
-                    children: [
-                      ...state.data.map(
-                        (data) => UserWidget(
-                          title: '${data.name} ${data.surname}',
-                          description: data.email!,
-                          imageUrl: data.image!,
-                          uid: data.uid,
-                          onTap: () async {
-                            Navigator.push(
-                              context,
-                              ConnectChatScreen.route(
-                                userEntity: userEntity,
-                                targetUser: data,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                }
-                if (state is FailedSearch) {
-                  return const Center(child: Text("Failed Search"));
-                }
-                return const SizedBox();
-              },
-            ),
-            const SizedBox(height: 30),
-          ],
+        child: BlocBuilder<ChatListCubit, ChatListState>(
+          bloc: BlocProvider.of<ChatListCubit>(context)..load(),
+          builder: (context, state) {
+            if (state is ChatListLoading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            if (state is ChatListLoaded) {
+              return ListView(
+                children: [
+                  ...state.chats.map(
+                    (data) => UserWidget(
+                      title: '${data.user.name} ${data.user.surname}',
+                      description: data.user.email!,
+                      imageUrl: data.user.image!,
+                      uid: data.user.uid,
+                      onTap: () async {
+                        Navigator.push(
+                          context,
+                          ConnectChatScreen.route(
+                            userEntity: userEntity,
+                            targetUser: data.user,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              );
+            }
+            if (state is ChatListFailure) {
+              return Center(
+                child: Text(state.message),
+              );
+            }
+            return Text(
+              state.toString(),
+            );
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(

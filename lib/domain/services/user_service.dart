@@ -71,15 +71,14 @@ class UserService {
     try {
       List<UserEntity> dataList = [];
 
-      final result = await fireStore
-          .collection(collection)
-          .where('uid', isNotEqualTo: currentUserId)
-          .get();
+      final result = await fireStore.collection(collection).get();
 
       log(result.toString());
 
       for (var element in result.docs) {
-        dataList.add(UserEntity.fromJson(element.data()));
+        if (element.id != currentUserId) {
+          dataList.add(UserEntity.fromJson(element.data()));
+        }
       }
 
       return dataList;
