@@ -70,7 +70,7 @@ class _ConnectChatScreenState extends State<ConnectChatScreen> {
               ),
               const SizedBox(width: 20),
               Text(
-                '${widget.receiver.name} ${widget.receiver.surname}',
+                widget.receiver.fullName,
                 style: const TextStyle(color: Colors.white),
               ),
             ],

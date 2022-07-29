@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entity/message_entity.dart';
 import '../../domain/entity/user_entity.dart';
 import '../cubit/auth/sign_in/sign_in_cubit.dart';
 import '../cubit/chat_list/chat_list_cubit.dart';
+import '../cubit/last_message/last_message_cubit.dart';
 import '../widget/user_widget.dart';
 import 'auth/sign_in_screen.dart';
 import 'chat_room_screen.dart';
-import 'search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   static route(UserEntity userEntity) => MaterialPageRoute(
@@ -57,18 +58,32 @@ class HomeScreen extends StatelessWidget {
               return ListView(
                 children: [
                   ...state.chats.map(
-                    (data) => UserWidget(
-                      title: '${data.user.name} ${data.user.surname}',
-                      description: data.user.email!,
-                      imageUrl: data.user.image!,
-                      uid: data.user.uid,
-                      onTap: () async {
-                        Navigator.push(
-                          context,
-                          ConnectChatScreen.route(
-                            userEntity: userEntity,
-                            targetUser: data.user,
-                          ),
+                    (data) => BlocBuilder<LastMessageCubit, LastMessageState>(
+                      bloc: data.lastMessageCubit,
+                      builder: (context, state) {
+                        MessageEntity? lastMessage;
+                        int count = 0;
+
+                        if (state is LastMessageLoaded) {
+                          lastMessage = state.chatRoom.lastMessage;
+                          count = state.notReadMessageCount;
+                        }
+                        return UserWidget(
+                          title: '${data.user.name} ${data.user.surname}',
+                          description: data.user.email.toString(),
+                          imageUrl: data.user.image.toString(),
+                          uid: userEntity.uid,
+                          lastMessage: lastMessage,
+                          notReadMessageCount: count,
+                          onTap: () async {
+                            Navigator.push(
+                              context,
+                              ConnectChatScreen.route(
+                                userEntity: userEntity,
+                                targetUser: data.user,
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -86,15 +101,6 @@ class HomeScreen extends StatelessWidget {
               state.toString(),
             );
           },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, SearchScreen.route(userEntity));
-        },
-        child: const Icon(
-          Icons.search,
-          color: Colors.white,
         ),
       ),
     );
